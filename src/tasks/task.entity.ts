@@ -1,9 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { TaskStatus } from './task-status.enum';
+// task.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
+import { TaskStatus } from "./task-status.enum";
 
 @Entity()
+@Index(["boardId", "status", "position"]) 
 export class Task {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -13,9 +15,12 @@ export class Task {
   name: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: TaskStatus,
     default: TaskStatus.TODO,
   })
   status: TaskStatus;
+
+  @Column({ type: "int", default: 0 })
+  position: number;
 }
