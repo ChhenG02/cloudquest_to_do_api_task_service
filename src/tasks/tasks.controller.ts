@@ -1,34 +1,44 @@
-import { Controller, Post, Get, Patch, Param, Body } from '@nestjs/common';
-import { TasksService } from './tasks.service';
-import { TaskStatus } from './task-status.enum';
+// tasks.controller.ts
+import { Controller, Post, Get, Patch, Param, Body } from "@nestjs/common";
+import { TasksService } from "./tasks.service";
+import { TaskStatus } from "./task-status.enum";
 
-@Controller('tasks')
+@Controller("tasks")
 export class TasksController {
   constructor(private tasksService: TasksService) {}
 
   @Post()
-  create(@Body('boardId') boardId: string, @Body('name') name: string) {
+  create(@Body("boardId") boardId: string, @Body("name") name: string) {
     return this.tasksService.createTask(boardId, name);
   }
 
-  // ✅ explicit route to avoid conflict
-  @Get('board/:boardId')
-  getByBoard(@Param('boardId') boardId: string) {
+  @Get("board/:boardId")
+  getByBoard(@Param("boardId") boardId: string) {
     return this.tasksService.getTasks(boardId);
   }
 
-  @Patch(':id/status')
-  updateStatus(@Param('id') taskId: string, @Body('status') status: TaskStatus) {
+  @Patch(":id/status")
+  updateStatus(@Param("id") taskId: string, @Body("status") status: TaskStatus) {
     return this.tasksService.updateStatus(taskId, status);
   }
 
-  @Patch(':id/assign')
-  assign(@Param('id') taskId: string, @Body('userIds') userIds: string[]) {
+  @Patch(":id/assign")
+  assign(@Param("id") taskId: string, @Body("userIds") userIds: string[]) {
     return this.tasksService.assignUsers(taskId, userIds);
   }
 
-  @Get(':id/assignees')
-  getAssignees(@Param('id') taskId: string) {
+  @Get(":id/assignees")
+  getAssignees(@Param("id") taskId: string) {
     return this.tasksService.getAssignees(taskId);
+  }
+
+  // ✅ NEW: reorder within a column
+  @Patch("board/:boardId/reorder")
+  reorder(
+    @Param("boardId") boardId: string,
+    @Body("status") status: TaskStatus,
+    @Body("orderedTaskIds") orderedTaskIds: string[],
+  ) {
+    return this.tasksService.reorderColumn(boardId, status, orderedTaskIds);
   }
 }
