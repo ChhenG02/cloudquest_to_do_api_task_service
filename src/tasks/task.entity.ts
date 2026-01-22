@@ -1,9 +1,15 @@
-// task.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { TaskStatus } from "./task-status.enum";
 
 @Entity()
-@Index(["boardId", "status", "position"]) 
+@Index(["boardId", "status", "position"])
 export class Task {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -14,6 +20,12 @@ export class Task {
   @Column()
   name: string;
 
+  @Column({ type: "text", nullable: true })
+  description: string | null;
+
+  @Column({ type: "timestamptz", nullable: true })
+  deadline: Date | null;
+
   @Column({
     type: "enum",
     enum: TaskStatus,
@@ -23,4 +35,10 @@ export class Task {
 
   @Column({ type: "int", default: 0 })
   position: number;
+
+  @CreateDateColumn({ type: "timestamptz" })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: "timestamptz" })
+  updatedAt: Date;
 }

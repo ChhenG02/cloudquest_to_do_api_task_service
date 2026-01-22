@@ -1,4 +1,3 @@
-// tasks.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,7 +13,12 @@ export class TasksService {
     private assigneeRepo: Repository<TaskAssignee>,
   ) {}
 
-  async createTask(boardId: string, name: string) {
+  async createTask(
+    boardId: string,
+    name: string,
+    description?: string,
+    deadline?: string,
+  ) {
     const row = await this.taskRepo
       .createQueryBuilder('t')
       .select('COALESCE(MAX(t.position), 0)', 'max')
@@ -28,24 +32,56 @@ export class TasksService {
     return this.taskRepo.save({
       boardId,
       name,
+      description: description?.trim() || null,
+      deadline: deadline ? new Date(deadline) : null,
       status: TaskStatus.TODO,
-      position: nextPos, // ✅ bottom
+      position: nextPos,
     });
   }
 
   async getTasks(boardId: string) {
-    // ✅ always return sorted tasks
     return this.taskRepo.find({
       where: { boardId },
       order: { status: 'ASC', position: 'ASC' },
     });
   }
 
+  async getTaskDetail(taskId: string) {
+    const task = await this.taskRepo.findOne({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+    return task;
+  }
+
+  async updateTask(
+    taskId: string,
+    updates: { name?: string; description?: string; deadline?: string },
+  ) {
+    const task = await this.taskRepo.findOne({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+
+    if (updates.name !== undefined) task.name = updates.name.trim();
+    if (updates.description !== undefined)
+      task.description = updates.description
+        ? updates.description.trim()
+        : null;
+    if (updates.deadline !== undefined)
+      task.deadline = updates.deadline ? new Date(updates.deadline) : null;
+
+    return this.taskRepo.save(task);
+  }
+
+  async deleteTask(taskId: string) {
+    const task = await this.taskRepo.findOne({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+
+    await this.taskRepo.delete({ id: taskId });
+    return { ok: true };
+  }
+
   async updateStatus(taskId: string, status: TaskStatus) {
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Task not found');
 
-    // move to bottom of target column
     const row = await this.taskRepo
       .createQueryBuilder('t')
       .select('COALESCE(MAX(t.position), 0)', 'max')
@@ -73,33 +109,5 @@ export class TasksService {
 
   async getAssignees(taskId: string) {
     return this.assigneeRepo.find({ where: { taskId } });
-  }
-
-  // ✅ NEW: reorder tasks within a column
-  async reorderColumn(
-    boardId: string,
-    status: TaskStatus,
-    orderedTaskIds: string[],
-  ) {
-    if (!orderedTaskIds?.length) return { ok: true };
-
-    // (optional) validate tasks belong to same board + status
-    const tasks = await this.taskRepo.findByIds(orderedTaskIds);
-    for (const t of tasks) {
-      if (t.boardId !== boardId || t.status !== status) {
-        throw new NotFoundException('Invalid reorder payload');
-      }
-    }
-
-    // set position = 1..N based on new order
-    // simplest safe approach: update one by one (ok for small lists)
-    for (let i = 0; i < orderedTaskIds.length; i++) {
-      await this.taskRepo.update(
-        { id: orderedTaskIds[i] },
-        { position: i + 1 },
-      );
-    }
-
-    return { ok: true };
   }
 }
