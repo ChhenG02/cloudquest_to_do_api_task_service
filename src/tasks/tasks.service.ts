@@ -110,4 +110,9 @@ export class TasksService {
   async getAssignees(taskId: string) {
     return this.assigneeRepo.find({ where: { taskId } });
   }
+
+  async deleteByBoardId(boardId: string) {
+  const result = await this.taskRepo.delete({ boardId }); 
+  return result.affected ?? 0;
+}
 }
