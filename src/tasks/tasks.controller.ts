@@ -11,7 +11,7 @@ export class TasksController {
     @Body("boardId") boardId: string,
     @Body("name") name: string,
     @Body("description") description?: string,
-    @Body("deadline") deadline?: string, // ISO string from frontend
+    @Body("deadline") deadline?: string, 
   ) {
     return this.tasksService.createTask(boardId, name, description, deadline);
   }
@@ -21,7 +21,6 @@ export class TasksController {
     return this.tasksService.getTasks(boardId);
   }
 
-  // ✅ NEW: get detail
   @Get(":id")
   getDetail(@Param("id") taskId: string) {
     return this.tasksService.getTaskDetail(taskId);
@@ -32,21 +31,24 @@ export class TasksController {
     return this.tasksService.updateStatus(taskId, status);
   }
 
-  // ✅ NEW: update description/deadline (optional but useful)
   @Patch(":id")
   updateTask(
     @Param("id") taskId: string,
     @Body("name") name?: string,
     @Body("description") description?: string,
-    @Body("deadline") deadline?: string, // ISO string
+    @Body("deadline") deadline?: string, 
   ) {
     return this.tasksService.updateTask(taskId, { name, description, deadline });
   }
 
-  // ✅ NEW: delete task
   @Delete(":id")
   delete(@Param("id") taskId: string) {
     return this.tasksService.deleteTask(taskId);
   }
 
+    @Delete("board/:boardId")
+  async deleteByBoard(@Param("boardId") boardId: string) {
+    const deletedCount = await this.tasksService.deleteByBoardId(boardId);
+    return { message: "Tasks deleted", boardId, deletedCount };
+  }
 }
