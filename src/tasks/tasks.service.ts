@@ -5,6 +5,7 @@ import { Task } from './task.entity';
 import { TaskAssignee } from './task-assignee.entity';
 import { TaskStatus } from './task-status.enum';
 
+
 @Injectable()
 export class TasksService {
   constructor(
@@ -112,7 +113,12 @@ export class TasksService {
   }
 
   async deleteByBoardId(boardId: string) {
-  const result = await this.taskRepo.delete({ boardId }); 
-  return result.affected ?? 0;
-}
+    const result = await this.taskRepo.delete({ boardId });
+    return result.affected ?? 0;
+  }
+
+  async setAssignees(taskId: string, userIds: string[]) {
+    return this.assignUsers(taskId, userIds);
+  }
+  
 }
